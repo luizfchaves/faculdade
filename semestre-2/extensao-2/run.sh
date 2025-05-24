@@ -1,18 +1,12 @@
 #!/bin/bash
 
-if [ -z "$1" ]; then
-    echo "Usage: $0 nome-do-arquivo-sem-extensao"
-    exit 1
-fi
 
-if [ ! -f "$1.c" ]; then
-    echo "Error: arquivo '$1.c' não encontrado."
-    exit 1
-fi
 
-gcc -o "$1" "$1.c"
+gcc -o "projeto-extensao" "projeto-extensao.c"
 if [ $? -eq 0 ]; then
-    ./"$1"
+    ./projeto-extensao
 else
-    echo "Error: falha na compilação do arquivo '$1.c'."
+    echo "Error: falha na compilação do arquivo 'projeto-extensao.c'."
 fi
+
+exit 0
