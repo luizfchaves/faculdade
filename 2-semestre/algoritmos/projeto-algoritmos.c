@@ -446,7 +446,7 @@ void consulta_imoveis() {
   pause_terminal();
 }
 int main() {
-  setlocale(LC_ALL, "portuguese");
+  setlocale(LC_ALL, "pt_BR.UTF-8");
 
 #ifdef _WIN32
   SetConsoleOutputCP(CP_UTF8);
