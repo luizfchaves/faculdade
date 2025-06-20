@@ -108,6 +108,7 @@ void lista_imoveis() {
   FILE *file = fopen(FILENAME, "r");
   if (file == NULL) {
     printf("Nenhum imóvel cadastrado.\n");
+    pause_terminal();
     return;
   }
   // Como não sei quantos imóveis serão cadastrados, vou utilizar uma lista
@@ -256,6 +257,7 @@ imovelStruct procura_imovel_por_codigo(char *codigo) {
   imovelFound.valor = 0.0;
   imovelFound.tamanhoM2 = 0;
   strcpy(imovelFound.estadoUF, "");
+  exit(1);
   strcpy(imovelFound.cidade, "");
 
   FILE *file = fopen(FILENAME, "r");
@@ -411,6 +413,7 @@ void remove_imovel() {
       break;
     }
     remove_no_arquivo(codigo);
+    exit(1);
   } while (1);
 
   printf("Imóvel excluído com sucesso!\n");
