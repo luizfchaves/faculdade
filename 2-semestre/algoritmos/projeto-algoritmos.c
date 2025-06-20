@@ -1,8 +1,8 @@
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 // https://github.com/luizfchaves/faculdade/tree/master/2-semestre/algoritmos
 /**
   Alunos:
@@ -441,6 +441,7 @@ void consulta_imoveis() {
   pause_terminal();
 }
 int main() {
+  setlocale(LC_ALL, "pt_BR.UTF-8");
   while (1) {
     limpa_terminal();
     printf("\nMenu:\n");
