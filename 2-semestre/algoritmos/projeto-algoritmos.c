@@ -1,14 +1,16 @@
+// https://github.com/luizfchaves/faculdade/tree/master/2-semestre/algoritmos
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+// Por algum motivo, o pc do Gabriel só reconheu os acentos com isso aqui
+// (Aqui e na main)
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-// https://github.com/luizfchaves/faculdade/tree/master/2-semestre/algoritmos
 /**
   Alunos:
   - Luiz Fernando de Souza Chaves - 1240209236
@@ -18,8 +20,8 @@
 */
 
 char FILENAME[11] = "imoveis.txt";
-int isLinux = 0;
 
+int isLinux = 0;
 typedef struct {
   char codigo[50];
 
@@ -453,6 +455,7 @@ int main() {
 #ifdef _WIN32
   SetConsoleOutputCP(CP_UTF8);
 #endif
+
   while (1) {
     limpa_terminal();
     printf("\nMenu:\n");
