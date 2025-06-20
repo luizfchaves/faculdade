@@ -257,7 +257,6 @@ imovelStruct procura_imovel_por_codigo(char *codigo) {
   imovelFound.valor = 0.0;
   imovelFound.tamanhoM2 = 0;
   strcpy(imovelFound.estadoUF, "");
-  exit(1);
   strcpy(imovelFound.cidade, "");
 
   FILE *file = fopen(FILENAME, "r");
