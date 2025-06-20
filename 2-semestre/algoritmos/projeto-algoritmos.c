@@ -107,8 +107,8 @@ void salva_no_arquivo(imovelStruct imovel) {
 void lista_imoveis() {
   FILE *file = fopen(FILENAME, "r");
   if (file == NULL) {
-    printf("Erro ao abrir o arquivo.\n");
-    exit(1);
+    printf("Nenhum imóvel cadastrado.\n");
+    return;
   }
   // Como não sei quantos imóveis serão cadastrados, vou utilizar uma lista
   // encadeada
@@ -249,11 +249,6 @@ void remove_no_arquivo(char *codigo) {
 }
 
 imovelStruct procura_imovel_por_codigo(char *codigo) {
-  FILE *file = fopen(FILENAME, "r");
-  if (file == NULL) {
-    printf("Erro ao abrir o arquivo.\n");
-    exit(1);
-  }
 
   // Inicializando para comparar depois
   imovelStruct imovelFound;
@@ -262,6 +257,11 @@ imovelStruct procura_imovel_por_codigo(char *codigo) {
   imovelFound.tamanhoM2 = 0;
   strcpy(imovelFound.estadoUF, "");
   strcpy(imovelFound.cidade, "");
+
+  FILE *file = fopen(FILENAME, "r");
+  if (file == NULL) {
+    return imovelFound; // Retorna vazio se o arquivo não existir
+  }
 
   imovelStruct imovel;
 
