@@ -18,7 +18,7 @@
 */
 
 char FILENAME[11] = "imoveis.txt";
-int isLinux = 1;
+int isLinux = 0;
 
 typedef struct {
   char codigo[50];
@@ -41,12 +41,12 @@ void print_imovel(imovelStruct imovel) {
 }
 
 void limpa_terminal() {
-  int funcionou = system("clear");
+  int funcionou = system("cls");
   // Tentando ser espertinho:
-  // system retorna 0 se foi com sucesso e -1 se foi com erro, então se clear
-  // não funcionou, provavelmente vai funcionar com o cls
-  if (funcionou == -1) {
-    isLinux = 0;
+  // system retorna 0 se foi com sucesso e diferente de 0 se foi com erro, então
+  // se cls não funcionou, provavelmente vai funcionar com o clear
+  if (funcionou != 0) {
+    isLinux = 1;
   }
 
   if (isLinux) {
