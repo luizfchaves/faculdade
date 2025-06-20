@@ -441,7 +441,7 @@ void consulta_imoveis() {
   pause_terminal();
 }
 int main() {
-  setlocale(LC_ALL, "pt_BR.UTF-8");
+  setlocale(LC_ALL, "portuguese");
   while (1) {
     limpa_terminal();
     printf("\nMenu:\n");
