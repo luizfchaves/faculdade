@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
+// https://github.com/luizfchaves/faculdade/tree/master/2-semestre/algoritmos
 /**
   Alunos:
   - Luiz Fernando de Souza Chaves - 1240209236
@@ -20,6 +21,8 @@ typedef struct {
   float valor;
   int tamanhoM2;
 
+  // Apesar do UF ser 2 caracteres, precisei deixar 3 para o
+  // "final" da string, estava printando infinito com [2]
   char estadoUF[3];
   char cidade[100];
 } imovelStruct;
@@ -31,8 +34,10 @@ void print_imovel(imovelStruct imovel) {
   printf("Estado: %s\n", imovel.estadoUF);
   printf("Cidade: %s\n", imovel.cidade);
 }
+
 void limpa_terminal() {
   int funcionou = system("clear");
+  // Tentando ser espertinho:
   // system retorna 0 se foi com sucesso e -1 se foi com erro, então se clear
   // não funcionou, provavelmente vai funcionar com o cls
   if (funcionou == -1) {
@@ -46,18 +51,47 @@ void limpa_terminal() {
   }
 }
 void pause_terminal() {
-  // Pelo que entendi, o scanf deixa um \n no buffer, então preciso utilizar
-  // esse getchar para remover o \n
+  // o scanf deixa um \n no buffer, então preciso utilizar um getchar a mais
+  // para remover o \n
   getchar();
 
   printf("Pressione Enter para continuar...");
   getchar();
 }
 
+int pegaNumeroOpcao(int opcaoMaxima) {
+  // Pega opção do usuário de maneira segura para não causar loop infinito
+
+  int input = -1;
+  int isOpcaoValida = 0;
+  do {
+    isOpcaoValida = scanf(" %d", &input);
+    if (!isOpcaoValida) {
+      // https://stackoverflow.com/questions/1716013/why-is-scanf-causing-infinite-loop-in-this-code/12425529
+      // mais especificamente: https://stackoverflow.com/a/41152924
+      // Basicamente, caso o usuário digite algo que não seja um número,
+      // o scanf deixa o que foi digitado no buffer
+
+      scanf("%*s"); // isso limpa o buffer
+      printf("Entrada inválida. Por favor, insira um número: ");
+      continue;
+    }
+    if (input > opcaoMaxima || input <= 0) {
+      isOpcaoValida = 0;
+    }
+
+    if (!isOpcaoValida) {
+      printf("Opção inválida. Por favor, insira uma opção válida: ");
+    }
+  } while (!isOpcaoValida);
+
+  return input;
+}
+
 void salva_no_arquivo(imovelStruct imovel) {
   FILE *file = fopen(FILENAME, "a");
   if (file == NULL) {
-    printf("Erro com a abertura do arquivo");
+    printf("Erro ao abrir arquivo");
     exit(1);
   }
 
@@ -65,13 +99,14 @@ void salva_no_arquivo(imovelStruct imovel) {
   fclose(file);
 }
 
-void lista_arquivo() {
+void lista_imoveis() {
   FILE *file = fopen(FILENAME, "r");
   if (file == NULL) {
     printf("Erro ao abrir o arquivo.\n");
     exit(1);
   }
-
+  // Como não sei quantos imóveis serão cadastrados, vou utilizar uma lista
+  // encadeada
   typedef struct listaEncadeadStruct {
     imovelStruct imovel;
     struct listaEncadeadStruct *proximo;
@@ -80,6 +115,7 @@ void lista_arquivo() {
   listaEncadeadaStruct *cabeca = NULL;
   listaEncadeadaStruct *atual = cabeca;
 
+  // Colocando todo o arquivo em memória
   imovelStruct imovel;
   while (fread(&imovel, sizeof(imovelStruct), 1, file)) {
     listaEncadeadaStruct *novo = malloc(sizeof(listaEncadeadaStruct));
@@ -94,19 +130,17 @@ void lista_arquivo() {
       atual = novo;
     }
   }
+  fclose(file);
 
   // Ordenando a lista encadeada por valor
-  // Arrumar é o item atual que está sendo verificado
-  // A função percorre a lista e encontra o menor valor
+  // Atual é o item atual que está sendo verificado
+  // A função percorre a lista e encontra o menor valor nos próximos
   // Depois troca o valor do item atual com o menor valor encontrado
   // Repete isso até que todos os itens estejam ordenados
+  while (atual != NULL) {
+    listaEncadeadaStruct *valorMenor = atual;
 
-  listaEncadeadaStruct *arrumar = cabeca;
-  while (arrumar != NULL) {
-    listaEncadeadaStruct *valorMenor = arrumar;
-
-    listaEncadeadaStruct *listaTemp = arrumar->proximo;
-
+    listaEncadeadaStruct *listaTemp = atual->proximo;
     while (listaTemp != NULL) {
       if (listaTemp->imovel.valor < valorMenor->imovel.valor) {
         valorMenor = listaTemp;
@@ -114,16 +148,15 @@ void lista_arquivo() {
       listaTemp = listaTemp->proximo;
     }
 
-    imovelStruct tempImovel = arrumar->imovel;
-    arrumar->imovel = valorMenor->imovel;
+    imovelStruct tempImovel = atual->imovel;
+    atual->imovel = valorMenor->imovel;
     valorMenor->imovel = tempImovel;
 
-    arrumar = arrumar->proximo;
+    atual = atual->proximo;
   }
 
   limpa_terminal();
-  printf("==========================================================\n");
-  printf("Lista de Imóveis ordenada por valor:\n\n");
+  printf("Lista de Imóveis ordenada por valor:\n");
   atual = cabeca;
   while (atual != NULL) {
     print_imovel(atual->imovel);
@@ -133,59 +166,32 @@ void lista_arquivo() {
     atual = atual->proximo;
     free(temp);
   }
-  printf("==========================================================\n");
 
-  fclose(file);
   pause_terminal();
 }
 
-void consulta_arquivo(char codigo[50]) {
-
-  FILE *file = fopen(FILENAME, "r");
-  if (file == NULL) {
-    printf("Erro ao abrir o arquivo.\n");
-    return;
-  }
-  limpa_terminal();
-  printf("==========================================================\n");
-  printf("Consulta de Imóveis:\n");
-  imovelStruct imovel;
-  int encontrado = 0;
-  while (fread(&imovel, sizeof(imovelStruct), 1, file)) {
-    if (strcmp(imovel.codigo, codigo) == 0) {
-      printf("\nImóvel encontrado:\n");
-      print_imovel(imovel);
-      encontrado = 1;
-    }
-  }
-
-  if (!encontrado) {
-    printf("Nenhum imóvel encontrado com o código: %s\n", codigo);
-  }
-  printf("==========================================================\n");
-  fclose(file);
-  pause_terminal();
-}
-
-int altera_no_arquivo(imovelStruct changedImovel) {
+void altera_no_arquivo(imovelStruct imovelAlterado) {
   FILE *file = fopen(FILENAME, "r+");
   if (file == NULL) {
     printf("Erro ao abrir o arquivo.\n");
-    return 0;
+    exit(1);
   }
   FILE *tempFile = fopen("temp.txt", "w");
   if (tempFile == NULL) {
     printf("Erro ao criar arquivo temporário.\n");
     fclose(file);
-    return 0;
+    exit(1);
   }
 
-  imovelStruct currentImovel;
-  while (fread(&currentImovel, sizeof(imovelStruct), 1, file)) {
-    if (strcmp(currentImovel.codigo, changedImovel.codigo) == 0) {
-      fwrite(&changedImovel, sizeof(imovelStruct), 1, tempFile);
+  // Todos os imoveis que tem código diferente do código vão direto pro temp
+  // o igual vai o alterado pro tempo ao inves do inicial
+  imovelStruct imovelOriginal;
+  while (fread(&imovelOriginal, sizeof(imovelStruct), 1, file)) {
+
+    if (strcmp(imovelOriginal.codigo, imovelAlterado.codigo) == 0) {
+      fwrite(&imovelAlterado, sizeof(imovelStruct), 1, tempFile);
     } else {
-      fwrite(&currentImovel, sizeof(imovelStruct), 1, tempFile);
+      fwrite(&imovelOriginal, sizeof(imovelStruct), 1, tempFile);
     }
   }
 
@@ -194,28 +200,26 @@ int altera_no_arquivo(imovelStruct changedImovel) {
 
   if (remove(FILENAME) != 0) {
     printf("Erro ao remover o arquivo original.\n");
-    return 0;
+    exit(1);
   }
 
   if (rename("temp.txt", FILENAME) != 0) {
     printf("Erro ao renomear o arquivo temporário.\n");
-    return 0;
+    exit(1);
   }
-
-  return 1;
 }
 
-int remove_no_arquivo(char *codigo) {
+void remove_no_arquivo(char *codigo) {
   FILE *file = fopen(FILENAME, "r+");
   if (file == NULL) {
     printf("Erro ao abrir o arquivo.\n");
-    return 0;
+    exit(1);
   }
   FILE *tempFile = fopen("temp.txt", "w");
   if (tempFile == NULL) {
     printf("Erro ao criar arquivo temporário.\n");
     fclose(file);
-    return 0;
+    exit(1);
   }
 
   imovelStruct currentImovel;
@@ -230,27 +234,24 @@ int remove_no_arquivo(char *codigo) {
 
   if (remove(FILENAME) != 0) {
     printf("Erro ao remover o arquivo original.\n");
-    return 0;
+    exit(1);
   }
 
   if (rename("temp.txt", FILENAME) != 0) {
     printf("Erro ao renomear o arquivo temporário.\n");
-    return 0;
+    exit(1);
   }
-
-  return 1;
 }
 
 imovelStruct procura_imovel_por_codigo(char *codigo) {
   FILE *file = fopen(FILENAME, "r");
   if (file == NULL) {
     printf("Erro ao abrir o arquivo.\n");
-    system("PAUSE");
     exit(1);
   }
-  imovelStruct imovelFound;
 
-  // Incializando para comparar depois
+  // Inicializando para comparar depois
+  imovelStruct imovelFound;
   strcpy(imovelFound.codigo, "");
   imovelFound.valor = 0.0;
   imovelFound.tamanhoM2 = 0;
@@ -287,10 +288,11 @@ void cadastra_imovel() {
     imovelStruct imovel_existente = procura_imovel_por_codigo(imovel.codigo);
     if (strcmp(imovel_existente.codigo, "") != 0) {
       printf("Imóvel com código %s já cadastrado.\n", imovel.codigo);
-      printf("Deseja sair? (1. Sim, [Qualquer outro]. Não): ");
+      printf("O que deseja fazer?\n");
+      printf("1. Cancelar\n");
+      printf("2. Cadastrar outro código\n");
 
-      int opcao;
-      scanf(" %d", &opcao);
+      int opcao = pegaNumeroOpcao(2);
       if (opcao == 1) {
         printf("Cadastro cancelado.\n");
         return;
@@ -321,9 +323,9 @@ void cadastra_imovel() {
 
 void altera_imovel() {
   limpa_terminal();
-
   char codigo[50];
   printf("Alteração de Imóvel\n");
+
   do {
     printf("Digite o código do imóvel a ser alterado: ");
     scanf(" %[^\n]", codigo);
@@ -332,15 +334,14 @@ void altera_imovel() {
     imovel = procura_imovel_por_codigo(codigo);
 
     if (strcmp(imovel.codigo, "") == 0) {
-      printf("Imóvel com código %s não exite.\n", imovel.codigo);
-      printf("Deseja sair? (1. Sim, [Qualquer outro]. Não): ");
+      printf("Imóvel com código %s não encontrado.\n", imovel.codigo);
+      printf("O que deseja fazer?\n");
+      printf("1. Cancelar\n");
+      printf("2. Buscar outro código\n");
 
-      int opcao;
-      scanf(" %d", &opcao);
-
+      int opcao = pegaNumeroOpcao(2);
       if (opcao == 1) {
         printf("Alteração cancelada.\n");
-        pause_terminal();
         return;
       }
       continue;
@@ -348,6 +349,7 @@ void altera_imovel() {
 
     printf("Imóvel encontrado:\n");
     print_imovel(imovel);
+
     printf("Digite o novo valor do imóvel: ");
     scanf(" %f", &imovel.valor);
     printf("Digite o novo tamanho em m² (inteiro): ");
@@ -358,58 +360,85 @@ void altera_imovel() {
     scanf(" %[^\n]", imovel.cidade);
     printf("Alterando imóvel...\n");
 
-    if (altera_no_arquivo(imovel)) {
-      printf("Imóvel alterado com sucesso!\n");
-      pause_terminal();
-      break;
-    } else {
-      printf("Erro ao alterar o imóvel.\n");
-    }
+    altera_no_arquivo(imovel);
   } while (1);
+
+  printf("Imóvel alterado com sucesso!\n");
+  pause_terminal();
 }
 
 void remove_imovel() {
   limpa_terminal();
-
   char codigo[50];
   printf("Exclusão de Imóvel\n");
-  printf("Digite o código do imóvel a ser excluído: ");
-  scanf(" %[^\n]", codigo);
 
-  imovelStruct imovel;
-  imovel = procura_imovel_por_codigo(codigo);
-  if (strcmp(imovel.codigo, "") == 0) {
-    printf("Imóvel com código %s não encontrado.\n", codigo);
-    pause_terminal();
-    return;
-  }
+  do {
+    printf("Digite o código do imóvel a ser excluído: ");
+    scanf(" %[^\n]", codigo);
 
-  printf("Imóvel encontrado:\n");
-  print_imovel(imovel);
+    imovelStruct imovel;
+    imovel = procura_imovel_por_codigo(codigo);
 
-  int confirmacao;
-  printf("Tem certeza que deseja excluir este imóvel? (1.Sim, [Qualquer "
-         "outro]. Não): ");
-  scanf(" %d", &confirmacao);
+    if (strcmp(imovel.codigo, "") == 0) {
+      printf("Imóvel com código %s não encontrado.\n", imovel.codigo);
+      printf("O que deseja fazer?\n");
+      printf("1. Cancelar\n");
+      printf("2. Buscar outro código\n");
 
-  if (confirmacao != 1) {
-    printf("Exclusão cancelada.\n");
-  } else if (remove_no_arquivo(codigo)) {
-    printf("Imóvel excluído com sucesso!\n");
-  } else {
-    printf("Erro ao excluir o imóvel.\n");
-  }
+      int opcao = pegaNumeroOpcao(2);
+      if (opcao == 1) {
+        printf("Remoção cancelada.\n");
+        break;
+      }
+      continue;
+    }
 
+    printf("Imóvel encontrado:\n");
+    print_imovel(imovel);
+
+    int confirmacao;
+    printf("Tem certeza que deseja excluir este imóvel? (1.Sim, [Qualquer "
+           "outro]. Não): ");
+    scanf(" %d", &confirmacao);
+
+    if (confirmacao != 1) {
+      printf("Exclusão cancelada.\n");
+      break;
+    }
+    remove_no_arquivo(codigo);
+  } while (1);
+
+  printf("Imóvel excluído com sucesso!\n");
   pause_terminal();
 }
 
-void consulta_imovel() {
+void consulta_imoveis() {
+  limpa_terminal();
   char codigo[50];
   printf("Consulta de Imóvel\n");
   printf("Digite o código do imóvel que deseja consultar: ");
   scanf(" %[^\n]", codigo);
 
-  consulta_arquivo(codigo);
+  FILE *file = fopen(FILENAME, "r");
+  if (file == NULL) {
+    printf("Erro ao abrir o arquivo.\n");
+    exit(1);
+  }
+
+  imovelStruct imovel;
+  int encontrado = 0;
+  while (fread(&imovel, sizeof(imovelStruct), 1, file)) {
+    if (strcmp(imovel.codigo, codigo) == 0) {
+      print_imovel(imovel);
+      encontrado = 1;
+    }
+  }
+  fclose(file);
+
+  if (!encontrado) {
+    printf("Nenhum imóvel encontrado com o código: %s\n", codigo);
+  }
+  pause_terminal();
 }
 int main() {
   while (1) {
@@ -428,24 +457,17 @@ int main() {
     printf("7. Sair\n");
     printf("Escolha uma opção: ");
 
-    int opcao, opcaoValida = 0;
-    opcaoValida = scanf(" %d", &opcao);
-    if (!opcaoValida) {
-      // https://stackoverflow.com/questions/1716013/why-is-scanf-causing-infinite-loop-in-this-code/12425529
-      scanf("%*s"); // Pelo que parece, isso limpa o buffer
-      printf("Entrada inválida. Por favor, insira um número.\n");
-      continue;
-    }
+    int opcao = pegaNumeroOpcao(7);
 
     switch (opcao) {
     case 1:
       cadastra_imovel();
       break;
     case 2:
-      lista_arquivo();
+      lista_imoveis();
       break;
     case 3:
-      consulta_imovel();
+      consulta_imoveis();
       break;
     case 4:
       altera_imovel();
@@ -460,8 +482,6 @@ int main() {
     case 7:
       printf("Saindo do programa...\n");
       return 0;
-    default:
-      printf("Opção inválida. Tente novamente.\n");
     }
   }
   return 0;
