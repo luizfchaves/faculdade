@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 // https://github.com/luizfchaves/faculdade/tree/master/2-semestre/algoritmos
 /**
   Alunos:
@@ -442,6 +447,10 @@ void consulta_imoveis() {
 }
 int main() {
   setlocale(LC_ALL, "portuguese");
+
+#ifdef _WIN32
+  SetConsoleOutputCP(CP_UTF8);
+#endif
   while (1) {
     limpa_terminal();
     printf("\nMenu:\n");
