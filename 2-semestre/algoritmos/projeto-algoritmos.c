@@ -140,6 +140,12 @@ void lista_imoveis() {
   }
   fclose(file);
 
+  if (cabeca == NULL) {
+    printf("Nenhum imóvel cadastrado.\n");
+    pause_terminal();
+    return;
+  }
+
   // Ordenando a lista encadeada por valor
   // Atual é o item atual que está sendo verificado
   // A função percorre a lista e encontra o menor valor nos próximos
