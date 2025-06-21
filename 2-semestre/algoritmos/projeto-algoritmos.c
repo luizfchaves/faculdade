@@ -476,15 +476,10 @@ int main() {
     printf("3. Consultar Imóvel\n");
     printf("4. Alterar Imóvel\n");
     printf("5. Excluir Imóvel\n");
-    if (isLinux) {
-      printf("6. Alterar para limpeza de terminal do Windows\n");
-    } else {
-      printf("6. Alterar para limpeza de terminal do Linux\n");
-    }
-    printf("7. Sair\n");
+    printf("6. Sair\n");
     printf("Escolha uma opção: ");
 
-    int opcao = pegaNumeroOpcao(7);
+    int opcao = pegaNumeroOpcao(6);
 
     switch (opcao) {
     case 1:
@@ -503,10 +498,6 @@ int main() {
       remove_imovel();
       break;
     case 6:
-      // Ternário
-      isLinux = isLinux ? 0 : 1;
-      break;
-    case 7:
       printf("Saindo do programa...\n");
       return 0;
     }
