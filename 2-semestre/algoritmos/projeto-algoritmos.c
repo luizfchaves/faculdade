@@ -351,6 +351,7 @@ void altera_imovel() {
       int opcao = pegaNumeroOpcao(2);
       if (opcao == 1) {
         printf("Alteração cancelada.\n");
+        pause_terminal();
         return;
       }
       continue;
@@ -370,6 +371,7 @@ void altera_imovel() {
     printf("Alterando imóvel...\n");
 
     altera_no_arquivo(imovel);
+    break;
   } while (1);
 
   printf("Imóvel alterado com sucesso!\n");
