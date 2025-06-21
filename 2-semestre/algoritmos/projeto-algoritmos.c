@@ -145,6 +145,7 @@ void lista_imoveis() {
   // A função percorre a lista e encontra o menor valor nos próximos
   // Depois troca o valor do item atual com o menor valor encontrado
   // Repete isso até que todos os itens estejam ordenados
+  atual = cabeca;
   while (atual != NULL) {
     listaEncadeadaStruct *valorMenor = atual;
 
