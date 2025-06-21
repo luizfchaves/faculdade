@@ -442,8 +442,9 @@ void consulta_imoveis() {
 
   FILE *file = fopen(FILENAME, "r");
   if (file == NULL) {
-    printf("Erro ao abrir o arquivo.\n");
-    exit(1);
+    printf("Nenhum imóvel encontrado com o código: %s\n", codigo);
+    pause_terminal();
+    return;
   }
 
   imovelStruct imovel;
