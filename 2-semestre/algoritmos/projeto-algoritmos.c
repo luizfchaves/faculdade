@@ -107,6 +107,7 @@ void salva_no_arquivo(imovelStruct imovel) {
 }
 
 void lista_imoveis() {
+  limpa_terminal();
   FILE *file = fopen(FILENAME, "r");
   if (file == NULL) {
     printf("Nenhum imóvel cadastrado.\n");
@@ -170,7 +171,6 @@ void lista_imoveis() {
     atual = atual->proximo;
   }
 
-  limpa_terminal();
   printf("Lista de Imóveis ordenada por valor:\n");
   atual = cabeca;
   while (atual != NULL) {
