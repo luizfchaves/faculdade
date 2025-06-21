@@ -399,7 +399,8 @@ void remove_imovel() {
       int opcao = pegaNumeroOpcao(2);
       if (opcao == 1) {
         printf("Remoção cancelada.\n");
-        break;
+        pause_terminal();
+        return;
       }
       continue;
     }
@@ -407,17 +408,19 @@ void remove_imovel() {
     printf("Imóvel encontrado:\n");
     print_imovel(imovel);
 
-    int confirmacao;
-    printf("Tem certeza que deseja excluir este imóvel? (1.Sim, [Qualquer "
-           "outro]. Não): ");
-    scanf(" %d", &confirmacao);
+    printf("Tem certeza que deseja excluir este imóvel?\n");
+    printf("1. Sim\n");
+    printf("2. Não\n");
 
-    if (confirmacao != 1) {
-      printf("Exclusão cancelada.\n");
-      break;
+    int confirmacao = pegaNumeroOpcao(2);
+    if (confirmacao == 2) {
+      printf("Remoção cancelada.\n");
+      pause_terminal();
+      return;
     }
+
     remove_no_arquivo(codigo);
-    exit(1);
+    break;
   } while (1);
 
   printf("Imóvel excluído com sucesso!\n");
