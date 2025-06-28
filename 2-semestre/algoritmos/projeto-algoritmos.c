@@ -462,6 +462,7 @@ void consulta_imoveis() {
   }
   pause_terminal();
 }
+
 int main() {
   setlocale(LC_ALL, "pt_BR.UTF-8");
 
