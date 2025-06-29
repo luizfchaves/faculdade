@@ -43,8 +43,6 @@ typedef struct {
   struct vendaStruct *proxima_venda;
 } vendaStruct;
 
-int dia, mes;
-
 void pause_terminal() {
   // o scanf deixa um \n no buffer, então preciso utilizar um getchar a mais
   // para remover o \n
@@ -75,38 +73,12 @@ void salva_venda(vendaStruct venda) {
   fclose(file);
 }
 
-void inicia_programa() {
-  printf("Olá!\n");
-  int sucesso = 0;
-  while (sucesso != 1) {
-    printf("Que dia é hoje? ");
-    scanf(" %d", &dia);
-
-    if (dia >= 1 && dia <= 31) {
-      sucesso = 1;
-    } else {
-      printf("Dia inválido. Tente novamente.\n");
-    }
-  }
-
-  sucesso = 0;
-  while (sucesso != 1) {
-    printf("Que mês é hoje? ");
-    scanf(" %d", &mes);
-
-    if (mes >= 1 && mes <= 12) {
-      sucesso = 1;
-    } else {
-      printf("Mês inválido. Tente novamente.\n");
-    }
-  }
-}
-
 menuEnum menu_inicio() {
   printf("Menu Inicial\n");
   printf("1. Cadastro de Venda\n");
-  printf("2. Consultar vendas do dia\n");
-  printf("3. Sair\n");
+  printf("2. Consultar relatório diário\n");
+  printf("3. Consultar relatório mensal\n");
+  printf("4. Sair\n");
 
   int opcao;
   scanf("%d", &opcao);
@@ -116,8 +88,9 @@ menuEnum menu_inicio() {
     return MENU_CADASTRO_VENDA;
   case 2:
     return MENU_LISTA_DIARIA;
-
   case 3:
+    return MENU_LISTA_MENSAL;
+  case 4:
     return MENU_SAIR;
   default:
     printf("Opção inválida. Tente novamente.\n");
@@ -128,10 +101,34 @@ menuEnum menu_inicio() {
 menuEnum menu_cadastro_venda() {
 
   printf("Cadastro de Venda\n\n");
+  vendaStruct venda;
 
   int sucesso = 0;
-  refeicaoEnum refeicao;
+  while (sucesso != 1) {
+    printf("Que dia é hoje? ");
+    scanf(" %d", &venda.dia);
 
+    if (venda.dia >= 1 && venda.dia <= 31) {
+      sucesso = 1;
+    } else {
+      printf("Dia inválido. Tente novamente.\n");
+    }
+  }
+
+  sucesso = 0;
+  while (sucesso != 1) {
+    printf("Que mês é hoje? ");
+    scanf(" %d", &venda.mes);
+
+    if (venda.mes >= 1 && venda.mes <= 12) {
+      sucesso = 1;
+    } else {
+      printf("Mês inválido. Tente novamente.\n");
+    }
+  }
+
+  refeicaoEnum refeicao;
+  sucesso = 0;
   while (sucesso != 1) {
     printf("1. Quentinha\n");
     printf("2. A quilo\n");
@@ -152,6 +149,7 @@ menuEnum menu_cadastro_venda() {
       sucesso = 0;
     }
   }
+  venda.tipoRefeicao = refeicao;
 
   int peso = 0;
   float valor_comida;
@@ -163,6 +161,8 @@ menuEnum menu_cadastro_venda() {
     scanf("%d", &peso);
     valor_comida = peso * PRECO_QUILO / 1000.0f;
   }
+  venda.peso = peso;
+  venda.valor_comida = valor_comida;
 
   printf("O preço da refeição é: R$%.2f\n", valor_comida);
 
@@ -196,6 +196,8 @@ menuEnum menu_cadastro_venda() {
     printf("Você escolheu adicionar bebidas no valor de R$%.2f\n",
            valor_bebidas);
   }
+  venda.valor_bebidas = valor_bebidas;
+  venda.quantidade_bebidas = quantidade_bebidas;
 
   clear_screen();
   printf("O preço total da refeição é: R$%.2f\n", valor_comida + valor_bebidas);
@@ -223,15 +225,6 @@ menuEnum menu_cadastro_venda() {
       printf("Venda confirmada!\n");
       sucesso = 1;
 
-      vendaStruct venda;
-      venda.dia = dia;
-      venda.mes = mes;
-      venda.valor_comida = valor_comida;
-      venda.peso = peso;
-      venda.valor_bebidas = valor_bebidas;
-      venda.quantidade_bebidas = quantidade_bebidas;
-      venda.tipoRefeicao = refeicao;
-
       salva_venda(venda);
       return MENU_INICIO;
     } else if (opcao == 2) {
@@ -253,10 +246,10 @@ menuEnum menu_lista_diaria() {
     exit(1);
   }
 
-  vendaStruct venda;
   typedef struct listaEncadeadStruct {
     int dia;
     int mes;
+
     float valorTotal;
     int pesoTotal;
     int quantidadeQuentinhas;
@@ -267,8 +260,8 @@ menuEnum menu_lista_diaria() {
   listaEncadeadaStruct *cabeca = NULL;
   listaEncadeadaStruct *atual = cabeca;
 
+  vendaStruct venda;
   while (fread(&venda, sizeof(vendaStruct), 1, file) == 1) {
-    printf("Lendo venda: %d/%d\n", venda.dia, venda.mes);
     listaEncadeadaStruct *listaTemp = cabeca;
     while (listaTemp != NULL) {
       if (listaTemp->dia == venda.dia && listaTemp->mes == venda.mes) {
@@ -276,10 +269,12 @@ menuEnum menu_lista_diaria() {
       }
       listaTemp = listaTemp->proximo;
     }
+
     if (listaTemp == NULL) {
       listaEncadeadaStruct *novo = malloc(sizeof(listaEncadeadaStruct));
       novo->dia = venda.dia;
       novo->mes = venda.mes;
+
       novo->valorTotal = venda.valor_comida + venda.valor_bebidas;
       novo->pesoTotal = venda.peso;
       novo->quantidadeQuentinhas = 0;
@@ -312,20 +307,29 @@ menuEnum menu_lista_diaria() {
     return MENU_INICIO;
   }
 
-  printf("Relatório de Vendas do Diário\n");
+  printf("Relatório de Vendas do Diário dd/mm\n");
+
   atual = cabeca;
 
   while (atual != NULL) {
-    printf("%d/%d\n", atual->dia, atual->mes);
-    printf("  Número de quentinhas: %d\n", atual->quantidadeQuentinhas);
-    printf("  Peso Total em vendas à quilo: %d\n", atual->pesoTotal);
-    printf("  Valor Total: R$%.2f\n", atual->valorTotal);
+    printf(
+        "%02d/%02d - Quentinhas: %d, Peso total (em gramas): %d, Valor total: "
+        "%.2f\n",
+        atual->dia, atual->mes, atual->quantidadeQuentinhas, atual->pesoTotal,
+        atual->valorTotal);
 
     atual = atual->proximo;
-    free(atual);
+    // free (atual);
   }
-  printf("Vendas lidas com sucesso!\n");
 
+  printf("Vendas lidas com sucesso!\n");
+  // tentei liberar antes e quebrou os valores, então vou liberar aqui (laele)
+  atual = cabeca;
+  while (atual != NULL) {
+    listaEncadeadaStruct *temp = atual;
+    atual = atual->proximo;
+    free(temp);
+  }
   pause_terminal();
   return MENU_INICIO;
 }
@@ -336,13 +340,10 @@ menuEnum menu_lista_mensal() {
     printf("Erro ao abrir o arquivo.\n");
     exit(1);
   }
-
   vendaStruct venda;
   typedef struct listaEncadeadStruct {
     int mes;
     float valorTotal;
-    int pesoTotal;
-    int quantidadeQuentinhas;
 
     struct listaEncadeadStruct *proximo;
   } listaEncadeadaStruct;
@@ -362,11 +363,6 @@ menuEnum menu_lista_mensal() {
       listaEncadeadaStruct *novo = malloc(sizeof(listaEncadeadaStruct));
       novo->mes = venda.mes;
       novo->valorTotal = venda.valor_comida + venda.valor_bebidas;
-      novo->pesoTotal = venda.peso;
-      novo->quantidadeQuentinhas = 0;
-      if (venda.tipoRefeicao == REFEICAO_QUENTINHA) {
-        novo->quantidadeQuentinhas = 1;
-      }
 
       novo->proximo = NULL;
 
@@ -379,37 +375,62 @@ menuEnum menu_lista_mensal() {
       }
     } else {
       listaTemp->valorTotal += venda.valor_comida + venda.valor_bebidas;
-      listaTemp->pesoTotal += venda.peso;
-      if (venda.tipoRefeicao == REFEICAO_QUENTINHA) {
-        listaTemp->quantidadeQuentinhas += 1;
-      }
     }
   }
 
   fclose(file);
   if (cabeca == NULL) {
     printf("Nenhuma venda registrada.\n");
-    system("pause");
-
+    pause_terminal();
     return MENU_INICIO;
   }
 
-  printf("Vendas.\n");
+  // Ordenando a lista encadeada por valor
+  // Atual é o item atual que está sendo verificado
+  // A função percorre a lista e encontra o menor valor nos próximos
+  // Depois troca o valor do item atual com o menor valor encontrado
+  // Repete isso até que todos os itens estejam ordenados
   atual = cabeca;
-
   while (atual != NULL) {
-    printf("Mês: %d\n", atual->mes);
-    printf("Número de quentinhas: %d\n", atual->quantidadeQuentinhas);
-    printf("Peso Total: %d\n", atual->pesoTotal);
-    printf("Valor Total: R$%.2f\n", atual->valorTotal);
+    listaEncadeadaStruct *valor_maior = atual;
+    listaEncadeadaStruct *lista_temp = atual->proximo;
+
+    while (lista_temp != NULL) {
+      if (lista_temp->valorTotal > valor_maior->valorTotal) {
+        valor_maior = lista_temp;
+      }
+      lista_temp = lista_temp->proximo;
+    }
+
+    int temp_mes = atual->mes;
+    float temp_valor = atual->valorTotal;
+
+    atual->mes = valor_maior->mes;
+    atual->valorTotal = valor_maior->valorTotal;
+
+    valor_maior->mes = temp_mes;
+    valor_maior->valorTotal = temp_valor;
 
     atual = atual->proximo;
-    free(atual);
   }
+  printf("Vendas por mês ordenadas pelo valor:\n");
+  atual = cabeca;
+  while (atual != NULL) {
+    printf("Mês: %02d - R$ %.2f\n", atual->mes, atual->valorTotal);
+
+    atual = atual->proximo;
+  }
+
+  atual = cabeca;
+  while (atual != NULL) {
+    listaEncadeadaStruct *temp = atual;
+    atual = atual->proximo;
+    free(temp);
+  }
+
   printf("Vendas lidas com sucesso!\n");
 
-  system("pause");
-
+  pause_terminal();
   return MENU_INICIO;
 }
 
@@ -420,13 +441,13 @@ int main() {
   SetConsoleOutputCP(CP_UTF8);
 #endif
   clear_screen();
-  inicia_programa();
+  // inicia_programa();
 
   menuEnum menuAtual = MENU_INICIO;
 
   while (menuAtual != MENU_SAIR) {
     clear_screen();
-    printf("Hoje é dia %d do mês %d\n", dia, mes);
+    // printf("Hoje é dia %d do mês %d\n", dia, mes);
 
     switch (menuAtual) {
     case MENU_INICIO:
